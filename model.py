@@ -3,7 +3,7 @@ import torch.nn as nn
 
 # Одномерная сверточная нейросеть (1D-CNN)
 class TextCNN(nn.Module):
-    def __init__(self, vocab_size, embed_dim, num_classes, kernel_sizes, num_filters):
+    def __init__(self, vocab_size, embed_dim, num_classes, kernel_sizes, num_filters, dropout = 0.5):
         super(TextCNN, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         self.convs = nn.ModuleList([
@@ -12,20 +12,24 @@ class TextCNN(nn.Module):
         ])
         self.fc = nn.Linear(len(kernel_sizes) * num_filters, num_classes)
 
+        self.dropout = nn.Dropout(dropout)
+
     def forward(self, x, length):
         x = self.embedding(x).permute(0, 2, 1)  # (batch, embed_dim, seq_len)
         conv_outs = [torch.relu(conv(x)).max(dim=2)[0] for conv in self.convs]
         x = torch.cat(conv_outs, dim=1)
+        x = self.dropout(x)
         x = self.fc(x)
         return x
 
 # Рекуррентная нейросеть с LSTM
 class TextLSTM(nn.Module):
-    def __init__(self, vocab_size, embed_dim, hidden_dim, num_classes, num_layers=1, bidirectional=False):
+    def __init__(self, vocab_size, embed_dim, hidden_dim, num_classes, num_layers=1, bidirectional=False, dropout = 0.5):
         super(TextLSTM, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embed_dim)
-        self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers, batch_first=True, bidirectional=bidirectional)
+        self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers, batch_first=True, bidirectional=bidirectional, dropout=dropout)
         self.fc = nn.Linear(hidden_dim * (2 if bidirectional else 1), num_classes)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self,x, lengths):
 
@@ -37,17 +41,21 @@ class TextLSTM(nn.Module):
             hidden = torch.cat((hidden[-2], hidden[-1]), dim=1)
         else:
             hidden = hidden[-1]
+
+        hidden = self.dropout(hidden)
         x = self.fc(hidden)
         return x
 
 # Рекуррентная нейросеть с GRU
 class TextGRU(nn.Module):
-    def __init__(self, vocab_size, embed_dim, hidden_dim, num_classes, num_layers=1, bidirectional=False):
+    def __init__(self, vocab_size, embed_dim, hidden_dim, num_classes, num_layers=1, bidirectional=False, dropout = 0.5):
         super(TextGRU, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         
-        self.gru = nn.GRU(embed_dim, hidden_dim, num_layers, batch_first=True, bidirectional=bidirectional)
+        self.gru = nn.GRU(embed_dim, hidden_dim, num_layers, batch_first=True, bidirectional=bidirectional, dropout=dropout)
         self.fc = nn.Linear(hidden_dim * (2 if bidirectional else 1), num_classes)
+
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, lengths):
         x = self.embedding(x)  # (batch, seq_len, embed_dim)
@@ -59,6 +67,8 @@ class TextGRU(nn.Module):
             hidden = torch.cat((hidden[-2], hidden[-1]), dim=1)  # (batch, hidden_dim * 2)
         else:
             hidden = hidden[-1]  # (batch, hidden_dim)
+
+        hidden = self.dropout(hidden)    
         x = self.fc(hidden)
         return x
 
