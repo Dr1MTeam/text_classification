@@ -2,7 +2,7 @@
 
 ## Результаты
 
-| Алгоритм  | Картинка 1                | Картинка 2                | Картинка 3                |
+| Алгоритм  | loss               | acc               | f1               |
 |-----------|---------------------------|---------------------------|---------------------------|
 | cnn | ![img1](res/cnn/loss.png) |  ![img1](res/cnn/acc.png) | ![img1](res/cnn/f1.png)  |
 | lstm | ![img1](res/lstm/loss.png) |  ![img1](res/lstm/acc.png) | ![img1](res/lstm/f1.png)  |
